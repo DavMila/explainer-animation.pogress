@@ -12,7 +12,7 @@ and regardless of the nature of its
 [timeline](https://developer.mozilla.org/en-US/docs/Web/API/AnimationTimeline).
 
 ### Background
-There isn't a mechanism by which authors can directly know how much an animation has
+There isn't a method or property which authors can use to directly know how much an animation has
 advanced through its duration in a way that:
 - accounts for all of its iterations,
 - accounts for whether its `currentTime` is before or after its `startTime`, and
@@ -20,18 +20,6 @@ advanced through its duration in a way that:
 animations.
 
 There does exist a [`getComputedTiming().progress`](https://developer.mozilla.org/en-US/docs/Web/API/AnimationEffect/getComputedTiming#progress) API but it only reflects the progress of the current iteration of the animation.
-
-To compute the current progress of an animation, an author could use
-its [currentTime](https://developer.mozilla.org/en-US/docs/Web/API/Animation/currentTime)
-along with other properties of [Animation](https://developer.mozilla.org/en-US/docs/Web/API/Animation)
-but they would need to account for `currentTime` not being represented the same
-way for scroll-driven and time-driven animations (`currentTime` is a percentage
-for scroll-driven animations and an absolute time quantity for time-driven animations).
-Additionally, with scroll-driven animations, authors also have to account for
-the fact that `currentTime` is measured relative to the whole scroll range
-whereas a scroll-driven animation's [start](https://developer.mozilla.org/en-US/docs/Web/API/ViewTimeline/startOffset)
-and [end](https://developer.mozilla.org/en-US/docs/Web/API/ViewTimeline/endOffset)
-might not correspond to the entire scroll range.
 
 ### Proposal
 Add a read-only "progress" field to [Animation](https://developer.mozilla.org/en-US/docs/Web/API/Animation)
