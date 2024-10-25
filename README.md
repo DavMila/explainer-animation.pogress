@@ -46,7 +46,28 @@ In this [demo](https://codepen.io/awogbemila/pen/oNKpXWy)
 the [StereoPannerNode](https://developer.mozilla.org/en-US/docs/Web/API/StereoPannerNode)'s
 [pan value](https://developer.mozilla.org/en-US/docs/Web/API/StereoPannerNode/pan#value)
 is adjusted based on the progress of the time-driven animation moving the car
-across the screen over several iterations. The audio is panned from left to right as the animation makes progress from the leftmost scene to the rightmost one.
+across the screen over several iterations. The audio is panned from left to right as the animation makes progress from the leftmost scene to the rightmost one. In this example, the author
+starts an animation when the button is clicks and performs updates based on the
+progress of the animation via [`requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame) calls:
+```
+...
+function progress() {
+  return animation.progress;
+}
+
+document.querySelector('#startbutton').addEventListener('click', (e) => {
+  ...
+  animation.play();
+  const update = () => {
+    adjustAudio(progress());
+		...
+  };
+
+  requestAnimationFrame(update);
+  startAudio();
+});
+...
+```
 
 ### Scroll-Driven Animation
 
@@ -55,8 +76,8 @@ the progress of a scroll-driven animation is used to set the video's current fra
 
 ### Code Example
 
-In this scroll-driven [demo](https://davmila.github.io/demo-animation.progress/sda/index.html)
-the developer synchronizes a textual indication of how far into a section of the text
+Here is a scroll-driven [demo](https://davmila.github.io/demo-animation.progress/sda/index.html)
+where the developer synchronizes a textual indication of how far into a section of the text
 the user has scrolled with a graphical indication (the green bar).
 
 To do this, they create an animation using a scroll-timeline:
