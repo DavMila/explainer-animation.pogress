@@ -15,11 +15,10 @@ and regardless of the nature of its
 There isn't a method or property which authors can use to directly know how much an animation has
 advanced through its duration in a way that:
 - accounts for all of its iterations,
-- accounts for whether its `currentTime` is before or after its `startTime`, and
 - offers a consistent representation for both scroll-driven and time-driven
 animations.
 
-There does exist a [`getComputedTiming().progress`](https://developer.mozilla.org/en-US/docs/Web/API/AnimationEffect/getComputedTiming#progress) API but it only reflects the progress of the current iteration of the animation.
+There does exist an [`AnimationEffect.getComputedTiming().progress`](https://developer.mozilla.org/en-US/docs/Web/API/AnimationEffect/getComputedTiming#progress) API but it only reflects the progress of the current iteration of the animation.
 
 ### Proposal
 Add a read-only "progress" field to [Animation](https://developer.mozilla.org/en-US/docs/Web/API/Animation)
@@ -32,51 +31,33 @@ The proposed read-only `progress` accessor allows authors to update other parts
 of their page based on how far along an animation has advanced. They can use
 this to:
 
-- Give the user a sense of when an ongoing visual effect will end, e.g. in the
-time-driven flashing animation example below.
 - Synchronize another element's appearance, e.g. a video, according to the
-animation's `progress`.
+animation's `progress` as in the scroll-driven example below.
+- Synchronize audio on a page with the progress of the animation as in the
+time-driven example below.
+- Give the user a sense of when an ongoing visual effect will end.
 
 
 ## Examples
 
 ### Time-Driven Animation
 
-In this [time-driven animation demo](https://davmila.github.io/demo-animation.progress/tda/index.html)
-where the developer lets the user set the number of iterations of 
-the flashing animation, the developer can provide the user 
-feedback of the progress of the animation as time passes by
-accessing `animation.progress`:
-
-```
-function animateBox() {
-  ...
-
-  animation = box.animate([
-    { opacity: 1 },
-    { opacity: 0 },
-    { opacity: 1 }
-  ], {
-    duration: 1000,
-    iterations: flashCount
-  });
-
-  ...
-}
-
-function updateInfo() {
-  ...
-  const progress_pct = Math.round(animation.progress * 100);
-  info.innerHTML = `The animation's progress: <div>${progress_pct}%<div>`;
-  ...
-}
-```
+In this [demo](https://codepen.io/awogbemila/pen/oNKpXWy)
+the [StereoPannerNode](https://developer.mozilla.org/en-US/docs/Web/API/StereoPannerNode)'s
+[pan value](https://developer.mozilla.org/en-US/docs/Web/API/StereoPannerNode/pan#value)
+is adjusted based on the progress of the time-driven animation moving the car
+across the screen over several iterations. The audio is panned from left to right as the animation makes progress from the leftmost scene to the rightmost one.
 
 ### Scroll-Driven Animation
 
-In this [scroll-driven animation demo](https://davmila.github.io/demo-animation.progress/sda/index.html)
-the developer has a convenient way of indicating to the user how far into a
-particular section of the text on the page a user has scrolled.
+In this [demo](https://codepen.io/bramus/pen/BaXwmyZ)
+the progress of a scroll-driven animation is used to set the video's current frame.
+
+### Code Example
+
+In this scroll-driven [demo](https://davmila.github.io/demo-animation.progress/sda/index.html)
+the developer synchronizes a textual indication of how far into a section of the text
+the user has scrolled with a graphical indication (the green bar).
 
 To do this, they create an animation using a scroll-timeline:
 ```
@@ -105,18 +86,48 @@ const makeAnimation = (subject, rangeStart, rangeEnd) => {
 
 const animation = makeAnimation(target, "cover 0%", "contain 100%");
 ```
-and observe, during every scroll event, what the `progress` of the animation is:
+and observe, during every scroll event, what the `progress` of the animation is.
 
+Since this animation is driven by scrolling, the developer could get the progress by
+doing a few calculations based on [scrollTop](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTop):
+```
+function progress() {
+  const lower_bound = (target.offsetTop - scroller.offsetTop) - scroller.clientHeight;
+  const upper_bound = lower_bound + target.offsetHeight;
+
+  // Compute raw fraction.
+  let progress = (scroller.scrollTop - lower_bound) / (upper_bound - lower_bound);
+
+  // Clamp to [0, 1];
+  progress = Math.min(progress, 1);
+  progress = Math.max(progress, 0);
+
+  return progress;
+}
+```
+which is slightly more tedious than what they could do with `animation.progress`:
+```
+function progress() {
+  return animation.progress;
+}
+```
+They'd then update the textual indication on every scroll event.
 ```
 const updateViewInfo = () => {
   ...
-  const progress_pct = animation.progress * 100;
+  const progress_pct = progress() * 100;
   viewInfo.innerHTML = `<h3>Required Section progress: ${ Math.round(progress_pct) }%.</h3>`;
   ...
 };
 
 scroller.addEventListener("scroll", updateViewInfo);
 ```
+Note that the above `scrollTop` calculation is what corresponds to the
+[rangeStart](https://developer.mozilla.org/en-US/docs/Web/API/Element/animate#rangestart)
+and [rangeEnd](https://developer.mozilla.org/en-US/docs/Web/API/Element/animate#rangeend)
+of "cover 0%" and "contain 100%" respectively
+(in `makeAnimation()`) in this particular layout. It might need to
+be adjusted slightly to correspond to a different scroll range and layout.
 
 ## Details
 
