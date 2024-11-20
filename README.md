@@ -1,7 +1,7 @@
-# Explainer: animation.progress
+# Explainer: animation.overallProgress
 
 ## Introduction
-This is an explainer for `animation.progress`, a proposal to add a "progress"
+This is an explainer for `animation.overallProgress`, a proposal to add an "overallProgress"
 property to the JavaScript class
 [Animation](https://developer.mozilla.org/en-US/docs/Web/API/Animation).
 
@@ -21,18 +21,18 @@ animations.
 There does exist an [`AnimationEffect.getComputedTiming().progress`](https://developer.mozilla.org/en-US/docs/Web/API/AnimationEffect/getComputedTiming#progress) API but it only reflects the progress of the current iteration of the animation.
 
 ### Proposal
-Add a read-only "progress" field to [Animation](https://developer.mozilla.org/en-US/docs/Web/API/Animation)
+Add a read-only "overallProgress" field to [Animation](https://developer.mozilla.org/en-US/docs/Web/API/Animation)
 which is represented the same way for both time-driven and scroll-driven
 animations and accounts for the state of the animation and the actual
 time/scroll range during which the animation is active.
 
 ## Use Cases
-The proposed read-only `progress` accessor allows authors to update other parts
+The proposed read-only `overallProgress` accessor allows authors to update other parts
 of their page based on how far along an animation has advanced. They can use
 this to:
 
 - Synchronize another element's appearance, e.g. a video, according to the
-animation's `progress` as in the scroll-driven example below.
+animation's `overllProgress` as in the scroll-driven example below.
 - Synchronize audio on a page with the progress of the animation as in the
 time-driven example below.
 - Give the user a sense of when an ongoing visual effect will end.
@@ -52,7 +52,7 @@ progress of the animation via [`requestAnimationFrame`](https://developer.mozill
 ```
 ...
 function progress() {
-  return animation.progress;
+  return animation.overallProgress;
 }
 
 document.querySelector('#startbutton').addEventListener('click', (e) => {
@@ -72,7 +72,7 @@ document.querySelector('#startbutton').addEventListener('click', (e) => {
 ### Scroll-Driven Animation
 
 In this [demo](https://codepen.io/bramus/pen/BaXwmyZ)
-the progress of a scroll-driven animation is used to set the video's current frame.
+the overall progress of a scroll-driven animation is used to set the video's current frame.
 
 ### Code Example
 
@@ -107,9 +107,9 @@ const makeAnimation = (subject, rangeStart, rangeEnd) => {
 
 const animation = makeAnimation(target, "cover 0%", "contain 100%");
 ```
-and observe, during every scroll event, what the `progress` of the animation is.
+and observe, during every scroll event, what the `overallProgress` of the animation is.
 
-Since this animation is driven by scrolling, the developer could get the progress by
+Since this animation is driven by scrolling, the developer could get the overall progress by
 doing a few calculations based on [scrollTop](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTop):
 ```
 function progress() {
@@ -126,10 +126,10 @@ function progress() {
   return progress;
 }
 ```
-which is slightly more tedious than what they could do with `animation.progress`:
+which is slightly more tedious than what they could do with `animation.overallProgress`:
 ```
 function progress() {
-  return animation.progress;
+  return animation.overallProgress;
 }
 ```
 They'd then update the textual indication on every scroll event.
@@ -152,7 +152,7 @@ be adjusted slightly to correspond to a different scroll range and layout.
 
 ## Details
 
-`Animation.progress` is generally defined as
+`Animation.overallProgress` is generally defined as
 ```
 progress = currentTime / effect endTime
 ```
@@ -165,7 +165,7 @@ It is however clamped to values in the range [0, 1] and will be null if:
 - the animation has no effect.
 
 If an animation's [endTime](https://developer.mozilla.org/en-US/docs/Web/API/AnimationEffect/getComputedTiming#endtime)
-is zero, its `progress` will be:
+is zero, its `overallProgress` will be:
 
 - 0 if its [currentTime](https://developer.mozilla.org/en-US/docs/Web/API/Animation/currentTime) is negative, and
 - 1, otherwise.
@@ -177,10 +177,10 @@ its progress is 0.
 
 #### Clamping to [0, 1]
 
-By clamping `animation.progress` to [0,1] we handle the case of zero-duration 
+By clamping `animation.overallProgress` to [0,1] we handle the case of zero-duration 
 animations by returning values of 0 or 1 which are more likely to be useful to
 developers than the more mathematically correct `-Infinity` and `+Infinity`.
 This however means that an animation `A` whose `currentTime` is 
 less than its `startTime` and a non-zero-duration animation `B` whose
 `currentTime` is equal to its `startTime` (and may therefore be visually 
-reflecting the animation's having started) both report `progress` of zero.
+reflecting the animation's having started) both report `overallProgress` of zero.
